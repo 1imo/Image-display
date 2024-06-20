@@ -8,7 +8,7 @@ $image_list = json_encode(array_map('basename', $images));
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Responsive Image Gallery</title>
+    <title>Image Gallery</title>
     <style>
     .gallery {
         display: grid;
@@ -89,6 +89,27 @@ $image_list = json_encode(array_map('basename', $images));
         cursor: pointer;
         z-index: 1001;
     }
+
+    .nav-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background-color: rgba(0, 0, 0, 0.5);
+        color: #fff;
+        font-size: 24px;
+        padding: 8px;
+        border: none;
+        cursor: pointer;
+        z-index: 1001;
+    }
+
+    .nav-btn.next {
+        right: 16px;
+    }
+
+    .nav-btn.prev {
+        left: 16px;
+    }
     </style>
 </head>
 <body>
@@ -96,13 +117,24 @@ $image_list = json_encode(array_map('basename', $images));
     <div id="modal" class="modal">
         <span class="close">&times;</span>
         <img class="modal-content" id="modalImg">
+        <button class="nav-btn prev" id="prevBtn">&lt;</button>
+        <button class="nav-btn next" id="nextBtn">&gt;</button>
     </div>
     <script>
+    const pathArray = window.location.pathname.split('/');
+    const directoryName = pathArray[pathArray.length - 2];
+    document.title = `Image Gallery - ${directoryName}`;
     document.addEventListener('DOMContentLoaded', function() {
         const images = <?php echo $image_list; ?>;
         const gallery = document.getElementById('imageGallery');
-        
-        images.forEach(src => {
+        const modal = document.getElementById('modal');
+        const modalImg = document.getElementById('modalImg');
+        const closeModal = document.querySelector('.close');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        let currentImageIndex = 0;
+
+        images.forEach((src, index) => {
             const container = document.createElement('div');
             container.className = 'image-container';
             const img = document.createElement('img');
@@ -113,17 +145,12 @@ $image_list = json_encode(array_map('basename', $images));
             };
             container.appendChild(img);
             gallery.appendChild(container);
-        });
 
-        const modal = document.getElementById('modal');
-        const modalImg = document.getElementById('modalImg');
-        const closeModal = document.querySelector('.close');
-
-        gallery.addEventListener('click', function(event) {
-            if (event.target.tagName === 'IMG') {
+            img.addEventListener('click', () => {
                 modal.style.display = 'block';
-                modalImg.src = event.target.src;
-            }
+                modalImg.src = src;
+                currentImageIndex = index;
+            });
         });
 
         closeModal.addEventListener('click', function() {
@@ -135,6 +162,19 @@ $image_list = json_encode(array_map('basename', $images));
                 modal.style.display = 'none';
             }
         });
+
+        function showNextImage() {
+            currentImageIndex = (currentImageIndex + 1) % images.length;
+            modalImg.src = images[currentImageIndex];
+        }
+
+        function showPrevImage() {
+            currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+            modalImg.src = images[currentImageIndex];
+        }
+
+        nextBtn.addEventListener('click', showNextImage);
+        prevBtn.addEventListener('click', showPrevImage);
     });
     </script>
 </body>
